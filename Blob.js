@@ -30,7 +30,7 @@
 	// in order to support older browsers that only have BlobBuilder
 	var BlobBuilder = view.BlobBuilder || view.WebKitBlobBuilder || view.MozBlobBuilder || (function(view) {
 		var
-			  get_class = function(object) {
+				get_class = function(object) {
 				return Object.prototype.toString.call(object).match(/^\[object\s(.*)\]$/)[1];
 			}
 			, FakeBlobBuilder = function BlobBuilder() {
@@ -49,7 +49,7 @@
 				this.code = this[this.name = type];
 			}
 			, file_ex_codes = (
-				  "NOT_FOUND_ERR SECURITY_ERR ABORT_ERR NOT_READABLE_ERR ENCODING_ERR "
+					"NOT_FOUND_ERR SECURITY_ERR ABORT_ERR NOT_READABLE_ERR ENCODING_ERR "
 				+ "NO_MODIFICATION_ALLOWED_ERR INVALID_STATE_ERR SYNTAX_ERR"
 			).split(" ")
 			, file_ex_code = file_ex_codes.length
@@ -73,7 +73,7 @@
 		if (!real_URL.createObjectURL) {
 			URL = view.URL = function(uri) {
 				var
-					  uri_info = document.createElementNS("http://www.w3.org/1999/xhtml", "a")
+						uri_info = document.createElementNS("http://www.w3.org/1999/xhtml", "a")
 					, uri_origin
 				;
 				uri_info.href = uri;
@@ -90,7 +90,7 @@
 		}
 		URL.createObjectURL = function(blob) {
 			var
-				  type = blob.type
+					type = blob.type
 				, data_URI_header
 			;
 			if (type === null) {
@@ -121,7 +121,7 @@
 			// decode data to a binary string
 			if (Uint8Array && (data instanceof ArrayBuffer || data instanceof Uint8Array)) {
 				var
-					  str = ""
+						str = ""
 					, buf = new Uint8Array(data)
 					, i = 0
 					, buf_len = buf.length
@@ -169,7 +169,7 @@
 				type = null;
 			}
 			return new FakeBlob(
-				  this.data.slice(start, args > 1 ? end : this.data.length)
+					this.data.slice(start, args > 1 ? end : this.data.length)
 				, type
 				, this.encoding
 			);
@@ -189,9 +189,23 @@
 		var builder = new BlobBuilder();
 		if (blobParts) {
 			for (var i = 0, len = blobParts.length; i < len; i++) {
-				builder.append(blobParts[i]);
+				if (Uint8Array && blobParts[i] instanceof Uint8Array) {
+					builder.append(blobParts[i].buffer);
+				}
+				else {
+					builder.append(blobParts[i]);
+				}
 			}
 		}
-		return builder.getBlob(type);
+		var blob = builder.getBlob(type);
+		if (!blob.slice && blob.webkitSlice) {
+			blob.slice = blob.webkitSlice;
+		}
+		return blob;
 	};
+
+	var getPrototypeOf = Object.getPrototypeOf || function(object) {
+		return object.__proto__;
+	};
+	view.Blob.prototype = getPrototypeOf(new view.Blob());
 }(typeof self !== "undefined" && self || typeof window !== "undefined" && window || this.content || this));
